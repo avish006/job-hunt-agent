@@ -11,9 +11,9 @@ Using **cloud-hosted models by Ollama** (via the LangChain ChatOllama interface)
 ### 1. **Cloud-Hosted Ollama AI Processing**
 By utilizing cloud-hosted Ollama models (configurable via the exposed API URL in the `.env` file), the system leverages powerful off-site LLMs for complex reasoning and data extraction without requiring massive local GPU resources. The AI reads your resume, extracts your exact skills and experience level, and then strictly filters raw job feeds so you only see roles you are truly qualified for.
 
-### 2. **Aggressive Job Aggregation Engine**
+### 2. **Job Aggregation Engine**
 The backend utilizes a multi-pronged approach to find jobs across the web:
-* **JobSpy Scraper:** A powerful scraping library that pulls raw postings simultaneously from LinkedIn, Indeed, Glassdoor, and ZipRecruiter.
+* **JobSpy Scraper:** A powerful scraping library that pulls raw postings simultaneously from LinkedIn & Indeed.
 * **Playwright Scraper:** Headless browser automation that digs deep into LinkedIn's live job search feeds to bypass basic API limitations.
 * **MCP (Model Context Protocol) Servers [Beta]:** 
   * **DuckDuckGo Open Web Search:** Scours the open web for obscure job postings or company-specific hiring pages.
