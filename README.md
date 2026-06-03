@@ -81,8 +81,9 @@ The backend requires a virtual environment to manage its scraping and AI depende
 7. **Configure your Environment (.env):**
    Create a `.env` file in the `backend/` directory and configure your cloud Ollama endpoint:
    ```env
-   MODEL_NAME=llama3
-   OLLAMA_BASE_URL=http://your-cloud-ollama-url.com
+   MODEL_PROVIDER=ollama
+   MODEL_NAME=gpt-oss:120b-cloud #Change this with any other ollama Cloud LLM ID.
+   OLLAMA_BASE_URL=http://localhost:11434
    ```
 
 ### Step 3: Set Up the React Frontend
