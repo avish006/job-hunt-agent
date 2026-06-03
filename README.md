@@ -45,7 +45,7 @@ Before you begin, ensure you have the following installed on your machine:
 ### Step 1: Clone the Repository
 Open your terminal (PowerShell or Command Prompt) and run:
 ```bash
-git clone https://github.com/yourusername/job-hunt-agent.git
+git clone https://github.com/avish006/job-hunt-agent.git
 cd job-hunt-agent
 ```
 
