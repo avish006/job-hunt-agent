@@ -1,6 +1,6 @@
 # Job Hunt AI Agent
 
-Job Hunt AI Agent is an advanced, privacy-first AI job-matching assistant that actively searches, scrapes, and aggregates remote software engineering and tech jobs tailored precisely to your resume.
+Job Hunt AI Agent is an advanced, privacy-first AI job-matching assistant that actively searches, scrapes, and aggregates software engineering and tech jobs tailored precisely to your resume.
 
 Using **cloud-hosted models by Ollama** (via the LangChain ChatOllama interface), modern web scraping (JobSpy, Playwright), and dynamic tool-calling architectures (Model Context Protocol / MCP), this tool serves as your highly personalized, intelligent employment recruiter.
 
@@ -115,7 +115,7 @@ npm run dev
 ### Step 5: Start Hunting!
 1. Open your browser and navigate to the local URL provided by Vite (usually `http://localhost:5173`).
 2. **Upload your Resume:** Click the "Upload PDF..." button in the left sidebar and select your resume.
-3. **Search for Jobs:** Type a prompt into the chat box like: *"Find me remote junior React developer roles. Ignore senior roles."*
+3. **Search for Jobs:** Type a prompt into the chat box like: *"Find me junior React developer roles. Ignore senior roles."*
 4. **Review Results:** The AI will process your request, trigger the scrapers in the background, actively filter the results against your resume, and present beautifully formatted markdown analysis alongside interactive Job Cards!
 
 ---
