@@ -4,6 +4,8 @@
 
 Upload a resume, type a request like *"Find me remote LangChain internships"*, and the agent will: expand that request into a dozen related search queries, scrape six different job sources in parallel, filter out irrelevant noise using semantic similarity, score every remaining job against your resume (ATS-style + semantic match), and return a ranked, conversational summary with interactive job cards.
 
+<img width="1896" height="912" alt="output-smallpngtools" src="https://github.com/user-attachments/assets/9918d931-12ce-497f-b11b-5bd86c5eca9f" />
+
 ---
 
 ## ✨ Features
