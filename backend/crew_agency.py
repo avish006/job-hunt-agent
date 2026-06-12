@@ -19,12 +19,18 @@ def tool_search_jobspy(keyword: str, location: str) -> str:
     Always call this first for each keyword. Returns a JSON list."""
     from scraper import JobSpyScraper
     jobs = []
-    country = "india" if any(w in location.lower() for w in [
-        "india", "bangalore", "mumbai", "delhi", "hyderabad", "pune", "remote"
-    ]) else "usa"
-    for site, c in [("indeed", country), ("linkedin", "usa")]:
+    loc_lower = location.lower()
+    country = "usa"
+    if any(w in loc_lower for w in ["india", "bangalore", "mumbai", "delhi", "hyderabad", "pune", "chennai"]):
+        country = "india"
+    elif any(w in loc_lower for w in ["uk", "london", "united kingdom"]):
+        country = "uk"
+    elif any(w in loc_lower for w in ["canada", "toronto", "vancouver"]):
+        country = "canada"
+        
+    for site in ["indeed", "linkedin"]:
         try:
-            results = JobSpyScraper(site_name=site, country=c).search(keyword, location)
+            results = JobSpyScraper(site_name=site, country=country).search(keyword, location)
             jobs.extend(results)
             logger.info(f"JobSpy [{site}] '{keyword}': {len(results)} results")
         except Exception as e:

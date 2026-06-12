@@ -461,10 +461,19 @@ Return [] if no job listings found. No markdown.
 # ─── Job Aggregator (for MCP server / legacy) ─────────────────────────────────
 class JobAggregator:
     def search_all(self, keywords: str, location: str) -> List[Dict[str, Any]]:
+        loc_lower = location.lower()
+        country = "usa"
+        if any(w in loc_lower for w in ["india", "bangalore", "mumbai", "delhi", "hyderabad", "pune", "chennai"]):
+            country = "india"
+        elif any(w in loc_lower for w in ["uk", "london", "united kingdom"]):
+            country = "uk"
+        elif any(w in loc_lower for w in ["canada", "toronto", "vancouver"]):
+            country = "canada"
+
         scrapers = [
             LinkedInPlaywrightScraper(),
-            JobSpyScraper(site_name="indeed", country="india"),
-            JobSpyScraper(site_name="linkedin"),
+            JobSpyScraper(site_name="indeed", country=country),
+            JobSpyScraper(site_name="linkedin", country=country),
             HackerNewsScraper(),
             RSSJobScraper(),
             YCScraper(),
