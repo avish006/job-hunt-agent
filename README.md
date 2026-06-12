@@ -232,7 +232,7 @@ You need three things running simultaneously:
 
 | Process | Command | Notes |
 |---|---|---|
-| SearxNG | *(already running as a Docker container from step 3)* | `docker ps` to confirm |
+| SearxNG | *(already running as a Docker container from step 3)* | `docker ps` or `docker start searxng` to confirm |
 | Backend | `cd backend && uvicorn main:app --host 127.0.0.1 --port 8000 --reload` | Run with the venv activated |
 | Frontend | `cd frontend && npm run dev` | Defaults to `http://localhost:5173` |
 
