@@ -1,127 +1,106 @@
 import os
 import json
+import logging
 from dotenv import load_dotenv
 from langchain_ollama import ChatOllama
-from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.messages import HumanMessage
 
 load_dotenv()
+logger = logging.getLogger(__name__)
 
 MODEL_NAME = os.getenv("MODEL_NAME", "llama3")
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-
-# Initialize Chat LLM
 llm = ChatOllama(model=MODEL_NAME, base_url=OLLAMA_BASE_URL)
 
-def search_jobs_tool(keywords: str, location: str) -> str:
-    """Manual tool function to search jobs using all engines."""
+def run_agent(message: str, resume_text: str = "") -> tuple:
+    """
+    CEO Agent:
+    1. Reads resume + prompt → extracts a LIST of keyword variants (not one combined string)
+    2. Deploys CrewAI agency with the keyword list
+    3. Returns (reply_text, jobs_list) where jobs_list feeds the frontend job cards
+    """
     try:
-        from scraper import JobAggregator
-        aggregator = JobAggregator()
-        jobs = aggregator.search_all(keywords=keywords, location=location)
-        
-        if not jobs:
-            return "No jobs found matching your criteria across any engines."
-            
-        result = f"Found {len(jobs)} unique jobs (Aggregated via Playwright, JobSpy & MCP):\n"
-        for i, j in enumerate(jobs):
-            result += f"{i+1}. {j['title']} at {j['company']} ({j['location']})\n   Source: {j.get('source', 'Unknown')}\n   URL: {j['url']}\n"
-        return result
-    except Exception as e:
-        return f"Error searching jobs: {str(e)}"
+        # ── Step 1: Extract keyword LIST + location ──────────────────────────
+        extraction_prompt = f"""You are a world-class technical recruiter with deep domain expertise across all industries.
 
-def run_agent(message: str, resume_text: str = "") -> str:
-    # 1. Ask the LLM to extract search parameters
-    extraction_prompt = f"""You are a job search assistant.
-Based on the user's message and their resume, extract the best job search keywords and location.
-If the user is not asking to search for jobs, output empty strings.
-Output ONLY valid JSON with keys "keywords", "location", "is_search". No other text.
+Your task: read this candidate's resume and request, identify their PRIMARY DOMAIN, then generate highly specific niche job title keywords within that domain.
 
-Resume:
+CANDIDATE'S REQUEST:
+"{message}"
+
+CANDIDATE'S FULL RESUME:
 {resume_text}
 
-User Message:
-{message}
+STEP 1 — Identify the domain:
+Read the resume. What is the candidate's PRIMARY domain?
+Examples: Generative AI / LLMs, Traditional ML / Data Science, Cybersecurity, Full Stack Web Dev, DevOps / Cloud, Mobile Dev, Blockchain, Marketing / Growth, Finance / Quant, Biotech, etc.
 
-Example Output:
-{{"keywords": "Software Engineering Internship", "location": "Remote", "is_search": true}}
+STEP 2 — Generate 5 to 8 Relevant keyword variants WITHIN that domain.
+Rules:
+- Every keyword must stay within the identified domain. Do NOT generate generic titles like "Software Engineer" or "Tech Intern" — those are too broad.
+- Generate SPECIFIC, Relevant titles that a recruiter in that domain would actually post.
+- Use the candidate's exact tools, frameworks, and projects to make keywords ultra-specific.
+- Each keyword is ONE standalone job title — never combine two roles into one string.
+- If the resume shows a student / fresher (no full-time work experience), append "Intern" or "Fresher" to each keyword.
+
+DOMAIN KEYWORD EXAMPLES (for reference only — generate for the actual resume domain):
+
+  Generative AI domain → "LLM Inference Engineer Intern", "RAG Pipeline Developer Intern", "Agentic AI Intern", "Prompt Engineer Intern", "LangChain Developer Intern", "LangGraph Engineer Intern", "Multimodal AI Intern", "AI Alignment Research Intern", "LLM Fine-tuning Intern", "Generative AI Application Intern"
+
+  Cybersecurity domain → "Penetration Testing Intern", "Red Team Intern", "SOC Analyst Intern", "Threat Intelligence Intern", "Malware Analysis Intern", "Cloud Security Intern", "CTF Researcher Intern", "Vulnerability Research Intern"
+
+  Full Stack Web domain → "React Developer Intern", "Next.js Developer Intern", "Node.js Backend Intern", "MERN Stack Intern", "GraphQL Developer Intern", "TypeScript Engineer Intern"
+
+  DevOps / Cloud domain → "Cloud Infrastructure Intern", "Kubernetes Engineer Intern", "Site Reliability Intern", "Platform Engineer Intern", "CI/CD Pipeline Intern"
+
+  Data Science / Analytics domain → "Data Analyst Intern", "Business Intelligence Intern", "SQL Analytics Intern", "Tableau Developer Intern", "Statistical Modeling Intern"
+
+STEP 3 — Extract location from the request. Default to "Remote" if not mentioned.
+
+Return ONLY a raw JSON object. No markdown. Example:
+{{"keywords": ["RAG Pipeline Developer Intern", "LangChain Developer Intern", "LLM Fine-tuning Intern", "Agentic AI Intern", "LangGraph Engineer Intern", "Multimodal AI Intern", "Prompt Engineer Intern", "Generative AI Application Intern"], "location": "Remote India"}}
 """
+        logger.info("CEO Agent: Extracting keyword list from resume + prompt...")
+        res = llm.invoke([HumanMessage(content=extraction_prompt)])
+        raw_json = res.content.strip()
+        for mk in ["```json", "```"]:
+            if raw_json.startswith(mk): raw_json = raw_json[len(mk):]
+        if raw_json.endswith("```"): raw_json = raw_json[:-3]
 
-    try:
-        extraction_response = llm.invoke([HumanMessage(content=extraction_prompt)])
-        # Parse the JSON response
         try:
-            content = extraction_response.content.strip()
-            # Remove markdown code blocks if present
-            if content.startswith("```json"):
-                content = content[7:]
-            if content.startswith("```"):
-                content = content[3:]
-            if content.endswith("```"):
-                content = content[:-3]
-                
-            parsed = json.loads(content.strip())
+            parsed = json.loads(raw_json.strip())
+            keywords_list = parsed.get("keywords", [message])
+            if isinstance(keywords_list, str):
+                keywords_list = [keywords_list]
+            location = parsed.get("location", "Remote")
         except json.JSONDecodeError:
-            # Fallback if it fails to output pure JSON
-            parsed = {"is_search": False}
+            logger.warning("CEO Agent: JSON parse failed, using raw message.")
+            keywords_list = [message]
+            location = "Remote"
 
-        # 2. If it's a search, execute it
-        search_results = ""
-        jobs_list = []
-        if parsed.get("is_search"):
-            kw = parsed.get("keywords", "internship")
-            loc = parsed.get("location", "Remote")
-            
-            from scraper import JobAggregator
-            aggregator = JobAggregator()
-            jobs_list = aggregator.search_all(keywords=kw, location=loc)
-            
-            if jobs_list:
-                filter_prompt = f"""You are a strict Job Matching Filter.
-The user's resume is:
-{resume_text}
+        print(f"\n[CEO Agent] 🎯 Keywords: {keywords_list} | Location: '{location}'\n")
+        logger.info(f"CEO Agent: keywords={keywords_list}, location='{location}'")
 
-The user requested: keywords: '{kw}', location: '{loc}'
+        # ── Step 2: Deploy the CrewAI agency ────────────────────────────────
+        from crew_agency import deploy_job_hunt_agency
+        markdown_summary, jobs_list, raw_jobs_list = deploy_job_hunt_agency(
+            keywords_list=keywords_list,
+            location=location,
+            resume_text=resume_text,
+            user_prompt=message
+        )
 
-Here are the raw scraped jobs:
-{json.dumps([{"id": i, "title": j["title"], "company": j["company"], "location": j["location"]} for i, j in enumerate(jobs_list)])}
+        # ── Step 3: Build the reply ──────────────────────────────────────────
+        keywords_display = ", ".join([f"`{k}`" for k in keywords_list])
+        reply = (
+            f"### ✅ Job Hunt Complete\n"
+            f"**Searched:** {keywords_display} in `{location}`\n"
+            f"**Matched jobs:** {len(jobs_list)} relevant postings found\n\n"
+            f"{markdown_summary}"
+        )
 
-Identify ONLY the jobs that strictly match the user's experience level and location. Ignore jobs that ask for 2+ years of experience if the user is a student looking for internships.
-Output a JSON list of the matching job IDs. ONLY output the JSON array (e.g. [0, 2, 5]). If none match, output []. No other text.
-"""
-                filter_res = llm.invoke([HumanMessage(content=filter_prompt)])
-                try:
-                    content = filter_res.content.strip()
-                    if content.startswith("```json"): content = content[7:]
-                    if content.startswith("```"): content = content[3:]
-                    if content.endswith("```"): content = content[:-3]
-                    valid_ids = json.loads(content.strip())
-                    if isinstance(valid_ids, list):
-                        jobs_list = [jobs_list[i] for i in valid_ids if i < len(jobs_list)]
-                except Exception:
-                    pass
-            
-            if not jobs_list:
-                search_results = "No jobs found matching your criteria across any engines."
-            else:
-                search_results = f"Found {len(jobs_list)} unique jobs (Aggregated via Playwright, JobSpy & MCP):\n"
-                for i, j in enumerate(jobs_list):
-                    search_results += f"{i+1}. {j['title']} at {j['company']} ({j['location']})\n   Source: {j.get('source', 'Unknown')}\n   URL: {j['url']}\n"
-
-        # 3. Generate final response
-        synthesis_prompt = f"""You are an AI Job Hunting Assistant. Your goal is to help the user based on their resume and the search results.
-
-User's Resume:
-{resume_text}
-
-User Message: {message}
-
-Job Search Results:
-{search_results}
-
-If search results are provided, present a brief summary to the user. Explain why they are a good match based on their resume. DO NOT list the jobs out one by one in text, because they will be displayed as interactive UI cards automatically.
-"""
-        final_response = llm.invoke([HumanMessage(content=synthesis_prompt)])
-        return final_response.content, jobs_list
+        return reply, jobs_list, raw_jobs_list
 
     except Exception as e:
-        return f"The agent encountered an execution error: {str(e)}", []
+        logger.error(f"CEO Agent error: {e}", exc_info=True)
+        return f"The CEO agent encountered an execution error: {str(e)}", []

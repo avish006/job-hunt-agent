@@ -31,8 +31,8 @@ USER_CONTEXT = {
 def chat(request: ChatRequest):
     from agent import run_agent
     try:
-        reply, jobs_list = run_agent(request.message, USER_CONTEXT["resume_text"])
-        return {"reply": reply, "jobs": jobs_list}
+        reply, jobs_list, raw_jobs_list = run_agent(request.message, USER_CONTEXT["resume_text"])
+        return {"reply": reply, "jobs": jobs_list, "raw_jobs": raw_jobs_list}
     except Exception as e:
         return {"reply": f"Agent encountered an error: {str(e)}"}
 
