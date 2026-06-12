@@ -202,7 +202,7 @@ Verify it's running by visiting `http://localhost:8080` in your browser — you 
 Make sure Ollama is installed and serving on `http://localhost:11434` (the default). Pull a model — this can be a local model or one of [Ollama's cloud-hosted models](https://ollama.com/cloud):
 
 ```bash
- ollama pull gemma4:31b-cloud
+ollama pull gemma4:31b-cloud
 ```
 
 Create a `.env` file inside `backend/`:
@@ -311,16 +311,6 @@ The exposed tool, `search_aggregated_jobs`, takes `keywords` and `location` and 
 - **Web scraping is inherently fragile.** LinkedIn, Wellfound, and YC's Work at a Startup can change their page structure or rate-limit/bot-detect at any time, which may cause individual scrapers to return fewer (or zero) results. The pipeline is designed to degrade gracefully — a failing scraper logs an error and contributes an empty list rather than crashing the whole run.
 - **SearxNG returns nothing** — almost always means the JSON format isn't enabled in `settings.yml`, or port `8080` isn't mapped to the container's `8888`. See [Setup step 3](#3-set-up-searxng-used-by-the-deep-web-scraper).
 - **Slow first run** — every LLM-dependent step (keyword extraction, query expansion, HN comment parsing, Crawl4AI extraction, relevance fallback) is a separate Ollama call. A smaller/faster model will dramatically reduce total latency at some cost to extraction quality.
-
----
-
-## 🗺️ Roadmap
-
-- [ ] Per-session resume storage for proper multi-user support
-- [ ] Automated test suite (current `test_*.py` files are manual/exploratory scripts)
-- [ ] `docker-compose` setup covering backend, frontend, and SearxNG together
-- [ ] Resolve the remaining Windows-specific MCP `stdio` issues
-- [ ] Retire `crew_agency.py` once `pipeline.py` is fully validated as its replacement
 
 ---
 
