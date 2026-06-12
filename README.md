@@ -73,7 +73,7 @@ flowchart TD
 
 | Layer | Technologies |
 |---|---|
-| **Backend** | Python 3.11+, FastAPI, Uvicorn, LangChain + `langchain-ollama` (ChatOllama), Ollama (local or cloud-hosted models) |
+| **Backend** | Python 3.11+, FastAPI, Uvicorn, CrewAI, LangChain + `langchain-ollama` (ChatOllama), Ollama (local or cloud-hosted models) |
 | **Scraping** | JobSpy, Playwright, BeautifulSoup4, Crawl4AI, SearxNG (self-hosted), feedparser, httpx/requests |
 | **NLP / Scoring** | scikit-learn (TF-IDF, cosine similarity), regex-based skill extraction |
 | **Resume parsing** | pdfplumber |
