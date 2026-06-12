@@ -470,12 +470,17 @@ class JobAggregator:
             YCScraper(),
             SearxNGCrawl4aiScraper()
         ]
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+        
         all_jobs = []
-        for scraper in scrapers:
-            try:
-                all_jobs.extend(scraper.search(keywords, location))
-            except Exception as e:
-                logger.error(f"{scraper.__class__.__name__} failed: {e}")
+        with ThreadPoolExecutor(max_workers=len(scrapers)) as executor:
+            future_to_scraper = {executor.submit(scraper.search, keywords, location): scraper for scraper in scrapers}
+            for future in as_completed(future_to_scraper):
+                scraper = future_to_scraper[future]
+                try:
+                    all_jobs.extend(future.result())
+                except Exception as e:
+                    logger.error(f"{scraper.__class__.__name__} failed: {e}")
 
         seen, deduped = set(), []
         for job in all_jobs:
