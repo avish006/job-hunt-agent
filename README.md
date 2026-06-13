@@ -158,6 +158,7 @@ Install dependencies and the Playwright browser:
 ```bash
 pip install -r requirements.txt
 playwright install chromium
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 **Windows only** — the MCP server uses COM objects via `pywin32`. Run the post-install script once so `pywintypes` resolves correctly:
@@ -224,6 +225,7 @@ Open a **new terminal** (leave the backend terminal/venv as-is):
 ```bash
 cd frontend
 npm install
+npm run dev
 ```
 
 ### 6. Run everything
